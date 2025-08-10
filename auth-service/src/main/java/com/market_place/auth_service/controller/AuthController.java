@@ -1,5 +1,7 @@
 package com.market_place.auth_service.controller;
 
+import com.market_place.auth_service.dto.LoginRequestDto;
+import com.market_place.auth_service.dto.LoginResponseDto;
 import com.market_place.auth_service.dto.RegisterRequestDto;
 import com.market_place.auth_service.dto.RegisterResponseDto;
 import com.market_place.auth_service.service.AuthServiceImpl;
@@ -18,8 +20,13 @@ public class AuthController {
 
     private final AuthServiceImpl authService;
 
-    @PostMapping("")
+    @PostMapping("/register")
     public ResponseEntity<RegisterResponseDto> register(@RequestBody @Valid RegisterRequestDto request){
         return ResponseEntity.status(201).body(authService.register(request));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto request){
+        return ResponseEntity.ok(authService.login(request));
     }
 }
