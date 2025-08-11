@@ -10,6 +10,7 @@ public class ProductMapper {
     public ProductResponseDto fromProductToDto(Product savedProduct){
         return ProductResponseDto.builder()
                 .id(savedProduct.getId())
+                .userId(savedProduct.getCreatorId())
                 .name(savedProduct.getName())
                 .description(savedProduct.getDescription())
                 .image(savedProduct.getImage())

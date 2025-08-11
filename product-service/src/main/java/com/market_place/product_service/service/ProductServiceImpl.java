@@ -10,10 +10,15 @@ import com.market_place.product_service.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,9 +32,11 @@ public class ProductServiceImpl implements ProductService{
     /// Quando aggiungo la security affidare al prodotto l'id di chi lo crea e il tipo (ADMIN, VENDITORE)
     @Override
     public ProductResponseDto create(ProductRequestDto request) {
+        UUID userId = getUserId();
         log.info("[CREATE] Creazione prodotto");
 
         Product newProduct = Product.builder()
+                .creatorId(userId)
                 .name(request.getName())
                 .description(request.getDescription())
                 .image(request.getImage())
@@ -46,7 +53,8 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public List<ProductResponseDto> getProducts() {
-        log.info("[GET] Visualizzazione dei prodotti");
+        UUID userId = getUserId();
+        log.info("[GET] Visualizzazione dei prodotti da parte di {}", userId);
 
         return productRepository.findAll().stream()
                 .map(mapper::fromProductToDto)
@@ -56,14 +64,15 @@ public class ProductServiceImpl implements ProductService{
     @Override
     @Transactional
     public ProductResponseDto updateQuantity(QuantityUpdateDto request) {
-        log.info("[UPDATE] Modifica della quantità per il prodotto {}", request.getProductId());
+        UUID userId = getUserId();
+        log.info("[UPDATE] Utente {} modifica della quantità per il prodotto {}",userId, request.getProductId());
 
         int rows;
 
         if (request.getType().equals(UpdateType.ADD)){
-            rows = productRepository.incrementQuantity(request.getProductId(), request.getQuantity());
+            rows = productRepository.incrementQuantity(request.getProductId(), request.getQuantity(), userId);
         } else {
-            rows = productRepository.decrementQuantity(request.getProductId(), request.getQuantity());
+            rows = productRepository.decrementQuantity(request.getProductId(), request.getQuantity(), userId);
         }
         if (rows == 0) {
             throw new EntityNotFoundException("Prodotto non trovato o quantità insufficiente");
@@ -75,5 +84,33 @@ public class ProductServiceImpl implements ProductService{
                 updatedProduct.getId(), updatedProduct.getQuantity());
 
         return mapper.fromProductToDto(updatedProduct);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+
+        log.info("[DELETE] User {} sta cercando di eliminare il prodotto {}", userId, id);
+
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        int rows;
+        if (isAdmin) {
+            rows = productRepository.deleteByIdCustom(id);
+        } else {
+            rows = productRepository.deleteByIdAndCreatorId(id, userId);
+        }
+        if (rows == 0){
+            log.warn("[DELETE] Prodotto con id {} non trovato o errore interno", id);
+            throw new EntityNotFoundException("Elemento non esistente");
+        }
+    }
+
+    private static UUID getUserId(){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (UUID) auth.getPrincipal();
     }
 }

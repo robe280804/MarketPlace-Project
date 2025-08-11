@@ -7,9 +7,11 @@ import com.market_place.product_service.service.ProductServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/product")
@@ -18,20 +20,33 @@ public class ProductController {
 
     private final ProductServiceImpl productService;
 
-    // hasRole('VENDITORE' and 'ADMIN')
+
+    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
     @PostMapping("/")
     public ResponseEntity<ProductResponseDto> create(@RequestBody @Valid ProductRequestDto request){
         return ResponseEntity.status(201).body(productService.create(request));
     }
 
-    // hasRole('VENDITORE' and 'ADMIN' and 'ACQUIRENTE')
+
+
+    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN') or hasRole('ACQUIRENTE')")
     @GetMapping("/")
     public ResponseEntity<List<ProductResponseDto>> getProducts(){
         return ResponseEntity.ok(productService.getProducts());
     }
 
+    //Un venditore può aggiornare il suo prodotto, lo stesso vale per l' admin
+    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
     @PutMapping("/")
     public ResponseEntity<ProductResponseDto> updateQuantity(@RequestBody @Valid QuantityUpdateDto request){
         return ResponseEntity.ok(productService.updateQuantity(request));
+    }
+
+    //Solo chi ha creato il prodotto o l'admin possono eliminarlo
+    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id){
+        productService.delete(id);
+        return ResponseEntity.noContent().build();  //204
     }
 }
