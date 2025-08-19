@@ -54,12 +54,12 @@ Include gestione prodotti, carrelli, ordini, messaggistica e un centro assistenz
 
 ## 🏗 Struttura a Microservizi
 📦 marketplace
-┣ 📂 auth-service → Autenticazione, autorizzazione, gestione ruoli
-┣ 📂 product-service → Crud prodotti
-┣ 📂 cart-service → Gestione carrello, wishlist e ordini
-┣ 📂 gateway → API Gateway per instradamento richieste
-┣ 📂 eureka → Service Discovery
-┗ 📂 config → Config Server centralizzato
+- ┣ 📂 auth-service → Autenticazione, autorizzazione, gestione ruoli
+- ┣ 📂 product-service → Crud prodotti
+- ┣ 📂 cart-service → Gestione carrello, wishlist e ordini
+- ┣ 📂 gateway → API Gateway per instradamento richieste
+- ┣ 📂 eureka → Service Discovery
+- ┗ 📂 config → Config Server centralizzato
 
 ## Gateway
 - Estrazione dati dell'utente dal token, invio di questi negli header

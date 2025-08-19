@@ -16,8 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -54,7 +52,7 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public List<ProductResponseDto> getProducts() {
         UUID userId = getUserId();
-        log.info("[GET] Visualizzazione dei prodotti da parte di {}", userId);
+        log.info("[GET PRODUCTS] Visualizzazione dei prodotti da parte di {}", userId);
 
         return productRepository.findAll().stream()
                 .map(mapper::fromProductToDto)
@@ -107,6 +105,15 @@ public class ProductServiceImpl implements ProductService{
             log.warn("[DELETE] Prodotto con id {} non trovato o errore interno", id);
             throw new EntityNotFoundException("Elemento non esistente");
         }
+    }
+
+    @Override
+    public List<ProductResponseDto> getUserProducts() {
+        log.info("[GET USER PRODUCTS] Visualizzazione dei prodotti dell'utente {}", getUserId());
+
+        return productRepository.findByCreatorId(getUserId()).stream()
+                .map(mapper::fromProductToDto)
+                .collect(Collectors.toList());
     }
 
     private static UUID getUserId(){

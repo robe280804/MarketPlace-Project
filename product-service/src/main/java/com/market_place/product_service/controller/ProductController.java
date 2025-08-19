@@ -11,7 +11,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/product")
@@ -20,14 +19,11 @@ public class ProductController {
 
     private final ProductServiceImpl productService;
 
-
     @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
     @PostMapping("/")
     public ResponseEntity<ProductResponseDto> create(@RequestBody @Valid ProductRequestDto request){
         return ResponseEntity.status(201).body(productService.create(request));
     }
-
-
 
     @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN') or hasRole('ACQUIRENTE')")
     @GetMapping("/")
@@ -48,5 +44,11 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id){
         productService.delete(id);
         return ResponseEntity.noContent().build();  //204
+    }
+
+    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
+    @GetMapping("/user")
+    public ResponseEntity<List<ProductResponseDto>> getUserProducts(){
+        return ResponseEntity.ok(productService.getUserProducts());
     }
 }

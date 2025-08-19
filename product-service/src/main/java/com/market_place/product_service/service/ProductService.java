@@ -6,8 +6,6 @@ import com.market_place.product_service.dto.QuantityUpdateDto;
 import jakarta.validation.Valid;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 public interface ProductService {
     ProductResponseDto create(@Valid ProductRequestDto request);
@@ -17,4 +15,6 @@ public interface ProductService {
     ProductResponseDto updateQuantity(@Valid QuantityUpdateDto request);
 
     void delete(Long id);
+
+    List<ProductResponseDto> getUserProducts();
 }
