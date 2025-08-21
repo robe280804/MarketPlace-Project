@@ -31,6 +31,12 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProducts());
     }
 
+    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN') or hasRole('ACQUIRENTE')")
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductResponseDto> getProduct(@PathVariable Long productId){
+        return ResponseEntity.ok(productService.getProduct(productId));
+    }
+
     //Un venditore può aggiornare il suo prodotto, lo stesso vale per l' admin
     @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
     @PutMapping("/")

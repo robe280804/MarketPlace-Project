@@ -1,18 +1,27 @@
 package com.market_place.cart_service.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 //RemoveTime = dopo una settimana dell'inserimento del prodotto dal carrello, se non viene comprato verrà rimosso dal carrello
 @Entity
 @Table(name = "cart_products")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
 public class CartProduct {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false)
     private String name;

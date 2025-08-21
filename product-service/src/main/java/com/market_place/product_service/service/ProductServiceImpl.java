@@ -116,6 +116,15 @@ public class ProductServiceImpl implements ProductService{
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public ProductResponseDto getProduct(Long productId) {
+        UUID userId = getUserId();
+        log.info("[GET PRODUCT] Visualizzazione prodotto con id {} da utente {}", userId, productId);
+
+        return productRepository.findById(productId).map(mapper::fromProductToDto)
+                .orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato"));
+    }
+
     private static UUID getUserId(){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return (UUID) auth.getPrincipal();
