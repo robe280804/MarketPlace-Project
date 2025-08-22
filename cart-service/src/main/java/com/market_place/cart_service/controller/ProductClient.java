@@ -1,14 +1,13 @@
 package com.market_place.cart_service.controller;
 
 import com.market_place.cart_service.dto.ProductResponseDto;
-import com.market_place.cart_service.model.CartProduct;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "PRODUCT-SERVICE")
-public interface ProductExchangeController {
+public interface ProductClient {
 
     @GetMapping("/api/product/{productId}")
-    ProductResponseDto getProduct(@PathVariable Long id);
+    ProductResponseDto getProduct(@PathVariable Long productId);
 }

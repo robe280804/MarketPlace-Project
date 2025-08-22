@@ -1,7 +1,7 @@
 package com.market_place.cart_service.service;
 
-import org.springframework.http.ResponseEntity;
+import com.market_place.cart_service.dto.CartUpdateResponseDto;
 
 public interface CartService {
-    ResponseEntity<CartUpdateResponseDto> addProduct(Long productId);
+    CartUpdateResponseDto addProduct(Long productId);
 }

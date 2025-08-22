@@ -1,8 +1,11 @@
 package com.market_place.cart_service.controller;
 
+import com.market_place.cart_service.dto.CartUpdateResponseDto;
 import com.market_place.cart_service.service.CartServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,8 +18,9 @@ public class CartController {
 
     //ADD, REMOVE, UPDATE QUANTITY
 
-    public ResponseEntity<CartUpdateResponseDto> add(Long productId){
-        return cartService.addProduct(productId);
+    @PostMapping("/add/{productId}")
+    public ResponseEntity<CartUpdateResponseDto> add(@PathVariable Long productId){
+        return ResponseEntity.ok(cartService.addProduct(productId));
     }
 
 
