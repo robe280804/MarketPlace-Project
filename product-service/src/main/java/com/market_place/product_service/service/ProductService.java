@@ -2,6 +2,7 @@ package com.market_place.product_service.service;
 
 import com.market_place.product_service.dto.ProductRequestDto;
 import com.market_place.product_service.dto.ProductResponseDto;
+import com.market_place.product_service.dto.PurchaseRequestDto;
 import com.market_place.product_service.dto.QuantityUpdateDto;
 import jakarta.validation.Valid;
 
@@ -18,5 +19,5 @@ public interface ProductService {
 
     List<ProductResponseDto> getUserProducts();
 
-    ProductResponseDto getProduct(Long productId);
+    ProductResponseDto purchaseProduct(Long productId, PurchaseRequestDto request);
 }

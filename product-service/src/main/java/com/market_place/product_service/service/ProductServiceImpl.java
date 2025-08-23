@@ -1,9 +1,6 @@
 package com.market_place.product_service.service;
 
-import com.market_place.product_service.dto.ProductRequestDto;
-import com.market_place.product_service.dto.ProductResponseDto;
-import com.market_place.product_service.dto.QuantityUpdateDto;
-import com.market_place.product_service.dto.UpdateType;
+import com.market_place.product_service.dto.*;
 import com.market_place.product_service.mapper.ProductMapper;
 import com.market_place.product_service.model.Product;
 import com.market_place.product_service.repository.ProductRepository;
@@ -27,7 +24,19 @@ public class ProductServiceImpl implements ProductService{
     private final ProductRepository productRepository;
     private final ProductMapper mapper;
 
-    /// Quando aggiungo la security affidare al prodotto l'id di chi lo crea e il tipo (ADMIN, VENDITORE)
+    /**
+     * Effettua la creazione del prodotto
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     * <ul>
+     *     <li> Ottiene l'id dell'utente dall'autenticazione </li>
+     *     <li> Crea il prodotto dai dati ottenuti nel DTO</li>
+     *     <li> Salva il prodotto nel db e crea il DTO di risposta</li>
+     * </ul>
+     * @param request DTO per validare i dati inseriti del prodotto
+     * @return un DTO che mappa l'oggetto dal database con i dati necessari
+     * @throws IllegalArgumentException se i dati del DTO non sono validi
+     */
     @Override
     public ProductResponseDto create(ProductRequestDto request) {
         UUID userId = getUserId();
@@ -49,6 +58,16 @@ public class ProductServiceImpl implements ProductService{
         return mapper.fromProductToDto(savedProduct);
     }
 
+    /**
+     * Ottiene tutti i prodotti
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     * <ul>
+     *     <li> Ottiene l'id dell'utente dall'autenticazione </li>
+     *     <li> Ottiene tutti i prodotti dal db e li converte in un DTO</li>
+     * </ul>
+     * @return un DTO che mappa l'oggetto dal database con i dati necessari
+     */
     @Override
     public List<ProductResponseDto> getProducts() {
         UUID userId = getUserId();
@@ -59,6 +78,20 @@ public class ProductServiceImpl implements ProductService{
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Aggiorna la quantità del prodotto
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     * <ul>
+     *     <li> Ottiene l'id dell'utente dall'autenticazione </li>
+     *     <li> In base al metodo (ADD, DECREMENT) eseguo una query per aggiornare la quantità </li>
+     *     <li> Se le righe aggiornate sono == 0, nessuna entità è stata aggiornata </li>
+     *     <li> Ottengo il prodotto aggiornato dal database e lo converto in un DTO </li>
+     * </ul>
+     * @param request DTO con id del prodotto, la quantità e il tipo di update (ADD, DECREMENT)
+     * @return un DTO che mappa l'oggetto dal database
+     * @throws EntityNotFoundException se il prodotto non viene trovato
+     */
     @Override
     @Transactional
     public ProductResponseDto updateQuantity(QuantityUpdateDto request) {
@@ -84,6 +117,20 @@ public class ProductServiceImpl implements ProductService{
         return mapper.fromProductToDto(updatedProduct);
     }
 
+    /**
+     * Elimina un progetto
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     * <ul>
+     *     <li> Ottiene l'id dell'utente dall'autenticazione </li>
+     *     <li> Verifico che l'utente sia un ADMIN </li>
+     *     <li> Se l'utente è un ADMIN può eliminare il prodotto </li>
+     *     <li> Se non lo è, l'utente deve aver creato il prodotto, altrimenti non lo può eliminare </li>
+     *     <li> Se le righe aggiornate sono == 0, nessuna entità è stata aggiornata </li>
+     * </ul>
+     * @param id del prodotto da eliminare
+     * @throws EntityNotFoundException entità non trovata
+     */
     @Override
     @Transactional
     public void delete(Long id) {
@@ -107,6 +154,16 @@ public class ProductServiceImpl implements ProductService{
         }
     }
 
+    /**
+     * Ottiene i prodotti che l'utente ha creato
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     * <ul>
+     *     <li> Ottengo i prodotti dove il creatorId = userId </li>
+     *     <li> Ritorno un DTO con i dati necessari del prodotto</li>
+     * </ul>
+     * @return un DTO che mappa l'oggetto dal database
+     */
     @Override
     public List<ProductResponseDto> getUserProducts() {
         log.info("[GET USER PRODUCTS] Visualizzazione dei prodotti dell'utente {}", getUserId());
@@ -116,13 +173,42 @@ public class ProductServiceImpl implements ProductService{
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Acquisto del prodotto
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     * <ul>
+     *     <li> Ottiene l'id dell'utente dall'autenticazione </li>
+     *     <li> Ottengo il prodotto dal db con il parametro id, e la quantità >= di quella nella requestDto </li>
+     *     <li> Eseguo una query per sottrarre la quantità richiesta dall'utente dal prodotto salvato </li>
+     *     <li> Se le righe aggiornate sono == 0, nessuna entità è stata aggiornata </li>
+     *     <li> Creo un DTO di risposta con i dati necessari del prodotto ottenuto </li>
+     *     <li> Setto la quantità del prodotto nel DTO = quantità richiesta dell'utente </li>
+     * </ul>
+     * @param productId id del prodotto
+     * @param requestDto DTO contenete la quantità richiesta dall'utente
+     * @return un DTO che mappa l'oggetto dal database
+     */
     @Override
-    public ProductResponseDto getProduct(Long productId) {
+    @Transactional
+    public ProductResponseDto purchaseProduct(Long productId, PurchaseRequestDto requestDto) {
         UUID userId = getUserId();
-        log.info("[GET PRODUCT] Visualizzazione prodotto con id {} da utente {}", userId, productId);
+        log.info("[PURCHASE] Acquisto del prodotto {}, quantita di {} da utente {}",
+                productId, requestDto.getQuantity(), userId);
 
-        return productRepository.findById(productId).map(mapper::fromProductToDto)
+        Product existProduct = productRepository.findAvaibleProduct(productId, requestDto.getQuantity())
                 .orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato"));
+
+        int rows = productRepository.decrementProductQuantity(existProduct.getId(), requestDto.getQuantity());
+        if (rows == 0){
+            log.warn("[UPDATE] Prodotto con id {} non trovato o errore interno", existProduct.getId());
+            throw new EntityNotFoundException("Elemento non esistente");
+        }
+
+        ProductResponseDto response = mapper.fromProductToDto(existProduct);
+        response.setQuantity(requestDto.getQuantity());
+
+        return response;
     }
 
     private static UUID getUserId(){

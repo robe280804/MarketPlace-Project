@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /// NOTA: query fa riferimento alla classe e ai suoi campi, non alle colonne nel db
@@ -32,4 +33,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     int deleteByIdAndCreatorId(Long id, UUID userId);
 
     List<Product> findByCreatorId(UUID userId);
+
+    @Query("SELECT p FROM Product p  WHERE p.id = :id AND p.quantity >= :quant")
+    Optional<Product> findAvaibleProduct(@Param("id")Long id, @Param("quant")int quantity);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Product p SET p.quantity = p.quantity - :quantity " +
+            "WHERE p.id = :id AND p.quantity >= :quantity")
+    int decrementProductQuantity(@Param("id")Long id, @Param("quantity") int quantity);
 }

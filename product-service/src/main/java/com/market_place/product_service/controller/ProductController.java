@@ -2,6 +2,7 @@ package com.market_place.product_service.controller;
 
 import com.market_place.product_service.dto.ProductRequestDto;
 import com.market_place.product_service.dto.ProductResponseDto;
+import com.market_place.product_service.dto.PurchaseRequestDto;
 import com.market_place.product_service.dto.QuantityUpdateDto;
 import com.market_place.product_service.service.ProductServiceImpl;
 import jakarta.validation.Valid;
@@ -31,10 +32,12 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProducts());
     }
 
+    /// RIMUOVE ANCHE LA QUANTITA
     @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN') or hasRole('ACQUIRENTE')")
-    @GetMapping("/{productId}")
-    public ResponseEntity<ProductResponseDto> getProduct(@PathVariable Long productId){
-        return ResponseEntity.ok(productService.getProduct(productId));
+    @PostMapping("/{productId}/purchase")
+    public ResponseEntity<ProductResponseDto> getProduct(@PathVariable Long productId,
+                                                         @RequestBody PurchaseRequestDto request){
+        return ResponseEntity.ok(productService.getProduct(productId, request));
     }
 
     //Un venditore può aggiornare il suo prodotto, lo stesso vale per l' admin
