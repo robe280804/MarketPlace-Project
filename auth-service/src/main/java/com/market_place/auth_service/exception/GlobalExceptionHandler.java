@@ -37,8 +37,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(UserAlredyRegisterEx.class)
-    public ResponseEntity<Object> handleUserAlredyRegisterEx(UserAlredyRegisterEx ex, WebRequest request){
+    @ExceptionHandler(UserAlreadyRegisterEx.class)
+    public ResponseEntity<Object> handleUserAlredyRegisterEx(UserAlreadyRegisterEx ex, WebRequest request){
         return generateResponse("Richiesta errata", ex, HttpStatus.BAD_REQUEST, request);
     }
 

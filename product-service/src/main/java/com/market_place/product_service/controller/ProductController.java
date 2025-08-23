@@ -34,7 +34,7 @@ public class ProductController {
     }
 
     //Un venditore può aggiornare il suo prodotto, lo stesso vale per l' admin
-    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN') or hasRole('ACQUIRENTE')")
     @PutMapping("/")
     public ResponseEntity<ProductResponseDto> updateQuantity(@RequestBody @Valid QuantityUpdateDto request){
         return ResponseEntity.ok(productService.updateQuantity(request));

@@ -12,4 +12,6 @@ public interface CartService {
     CartUpdateResponseDto remove(Long productId);
 
     CartDto getUserCart();
+
+    Double getTotalPrice();
 }

@@ -141,6 +141,18 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new EntityNotFoundException("Carrello non trovato"));
     }
 
+    @Override
+    public Double getTotalPrice() {
+        UUID userId = getUserId();
+
+        Cart userCart = cartRepository.findByUserOwner(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Carrello non trovato"));
+
+        return userCart.getCartItem().stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                .sum();
+    }
+
 
     private static UUID getUserId(){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

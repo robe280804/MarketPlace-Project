@@ -34,4 +34,9 @@ public class CartController {
     public ResponseEntity<CartDto> getUserCart(){
         return ResponseEntity.ok(cartService.getUserCart());
     }
+
+    @GetMapping("/total-price")
+    public ResponseEntity<Double> getTotalPrice(){
+        return ResponseEntity.ok(cartService.getTotalPrice());
+    }
 }
