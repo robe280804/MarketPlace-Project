@@ -20,6 +20,7 @@ public class ProductController {
 
     private final ProductServiceImpl productService;
 
+
     @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
     @PostMapping("/")
     public ResponseEntity<ProductResponseDto> create(@RequestBody @Valid ProductRequestDto request){
@@ -32,14 +33,6 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProducts());
     }
 
-    /// RIMUOVE ANCHE LA QUANTITA
-    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN') or hasRole('ACQUIRENTE')")
-    @PostMapping("/{productId}/purchase")
-    public ResponseEntity<ProductResponseDto> getProduct(@PathVariable Long productId,
-                                                         @RequestBody PurchaseRequestDto request){
-        return ResponseEntity.ok(productService.getProduct(productId, request));
-    }
-
     //Un venditore può aggiornare il suo prodotto, lo stesso vale per l' admin
     @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
     @PutMapping("/")
@@ -47,13 +40,24 @@ public class ProductController {
         return ResponseEntity.ok(productService.updateQuantity(request));
     }
 
-    //Solo chi ha creato il prodotto o l'admin possono eliminarlo
+    //Solo chi ha creato il prodotto o admin possono eliminarlo
     @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id){
         productService.delete(id);
         return ResponseEntity.noContent().build();  //204
     }
+
+
+
+    /// RIMUOVE ANCHE LA QUANTITA
+    @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN') or hasRole('ACQUIRENTE')")
+    @PostMapping("/{productId}/purchase")
+    public ResponseEntity<ProductResponseDto> purchaseProduct(@PathVariable Long productId,
+                                                         @RequestBody PurchaseRequestDto request){
+        return ResponseEntity.ok(productService.purchaseProduct(productId, request));
+    }
+
 
     @PreAuthorize("hasRole('VENDITORE') or hasRole('ADMIN')")
     @GetMapping("/user")

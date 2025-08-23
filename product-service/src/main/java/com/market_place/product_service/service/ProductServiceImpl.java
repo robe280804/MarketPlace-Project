@@ -197,7 +197,7 @@ public class ProductServiceImpl implements ProductService{
                 productId, requestDto.getQuantity(), userId);
 
         Product existProduct = productRepository.findAvaibleProduct(productId, requestDto.getQuantity())
-                .orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato"));
+                .orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato o quantità non disponibile"));
 
         int rows = productRepository.decrementProductQuantity(existProduct.getId(), requestDto.getQuantity());
         if (rows == 0){
@@ -207,6 +207,8 @@ public class ProductServiceImpl implements ProductService{
 
         ProductResponseDto response = mapper.fromProductToDto(existProduct);
         response.setQuantity(requestDto.getQuantity());
+
+        log.info("{}", response);
 
         return response;
     }
