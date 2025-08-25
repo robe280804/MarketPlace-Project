@@ -21,9 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CustomOncePerReqFilter extends OncePerRequestFilter {
 
-    /// I RUOLI CHE MI ARRIVERANNO NELL' HEADER INVIATI DAL GETAWAY AVRANNO GIA ROLE_ DAVANTI,
-    /// PERCHE VERRANNO ESTRATTI DAL TOKEN E FISSATI CON QUEL PREFISSO.
-    /// NON CONTROLLO CHE L'UTENTE ESISTA, ME NE OCCUPERò NEL GATEWAY
+    /// Creo l' authentication basandomi su i dati inviati dal gateway nell' header
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

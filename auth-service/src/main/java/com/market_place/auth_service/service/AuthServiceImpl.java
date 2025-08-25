@@ -2,6 +2,8 @@ package com.market_place.auth_service.service;
 
 import com.market_place.auth_service.dto.LoginRequestDto;
 import com.market_place.auth_service.dto.LoginResponseDto;
+import com.market_place.auth_service.exception.InvalidToken;
+import com.market_place.auth_service.exception.MissingAuthHeaderEx;
 import com.market_place.auth_service.exception.UserAlreadyRegisterEx;
 import com.market_place.auth_service.dto.RegisterRequestDto;
 import com.market_place.auth_service.dto.RegisterResponseDto;
@@ -23,11 +25,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -133,13 +132,27 @@ public class AuthServiceImpl implements AuthService {
 
     }
 
+    /**
+     * Validazione del token
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     *
+     * <ul>
+     *     <li> Verifica che l' header Authorization non sia null, e ne estrae il token </li>
+     *     <li> Estrae i dati inerenti all'utente, e lo ottiene se esiste dal database </li>
+     *     <li> Se il token non è valido o l'utente non esiste nel db lancia un eccezione </li>
+     *     <li> Inserisce negli header i dati dell'utente </li>
+     * </ul>
+     * @param authHeader contente il token passato dal gateway
+     * @return void
+     */
     @Override
     public ResponseEntity<Void> validateToken(String authHeader) {
         log.info("[VALIDAZIONE TOKEN]");
 
         if (authHeader == null){
             log.warn("[VALIDAZIONE TOKEN] Authorization non presente nel header della richiesta");
-            throw new RuntimeException("Authorization non presente nel header");
+            throw new MissingAuthHeaderEx("Authorization non presente nel header");
         }
         String token = authHeader.substring(7);
 
@@ -153,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (!jwtService.isTokenValid(token, userDetails)){
             log.warn("[VALIDAZIONE TOKEN] Token non valido per user {}", email);
-            throw new RuntimeException("Token non valido");
+            throw new InvalidToken("Token non valido");
         }
 
         return ResponseEntity.ok()
@@ -161,6 +174,5 @@ public class AuthServiceImpl implements AuthService {
                 .header("X-User-Email", email)
                 .header("X-User-Roles", String.join(",", roles))
                 .build();
-
     }
 }

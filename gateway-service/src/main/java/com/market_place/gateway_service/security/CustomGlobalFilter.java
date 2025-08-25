@@ -20,6 +20,8 @@ public class CustomGlobalFilter implements GlobalFilter {
 
     private final WebClient.Builder webClient;
 
+    /// Invio il token al microservice auth-service per validarlo ed estrarre i dati dell'utente
+    /// Inserisco i dati nell' header della richiesta, in tal modo ogni microservice gestirà questi a suo piacimento
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         log.info("[GATEWAY] Global filter in esecuzione");

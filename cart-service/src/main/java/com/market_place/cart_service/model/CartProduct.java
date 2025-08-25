@@ -37,6 +37,8 @@ public class CartProduct {
 
     private LocalDateTime removeTime;
 
+    //private boolean isBought
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;

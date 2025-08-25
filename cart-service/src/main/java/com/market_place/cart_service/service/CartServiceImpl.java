@@ -2,6 +2,8 @@ package com.market_place.cart_service.service;
 
 import com.market_place.cart_service.controller.ProductClient;
 import com.market_place.cart_service.dto.*;
+import com.market_place.cart_service.exception.CartNotFoundEx;
+import com.market_place.cart_service.exception.ProductNotFoundEx;
 import com.market_place.cart_service.model.Cart;
 import com.market_place.cart_service.model.CartProduct;
 import com.market_place.cart_service.repository.CartProductRepository;
@@ -27,12 +29,22 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final CartProductRepository cartProductRepository;
 
-    /// ATT -> MANCA LA PARTE DELLA LOGICA DELLA QUANTITA
-    /// Aggiunta prodotto al carrello
-    /// -> attraverso l'id del prodotto chiamo il microservice product-service e ottengo il prodotto
-    /// -> ottengo il Cart dell'utente, se non esiste lo creo e lo salvo nel database
-    /// -> creo il CartProduct attraverso il prodotto ottenuto e lo salvo nel database
-    /// -> aggiungo al Cart dell'utente il CartProduct e lo salvo nel database
+    /**
+     * Aggiunta prodotto al carrello
+     *
+     * <p> Il metodo esegue i seguenti step:</p>
+     *
+     * <ul>
+     *     <li> Chiamo il metodo purchase del product-service, che mi ritorna il Prodotto in DTO </li>
+     *     <li> Verifico che il prodotto non sia null, in caso lancio un eccezione </li>
+     *     <li> Ottengo il cart dell'utente e se non esiste lo creo e lo salvo nel database </li>
+     *     <li> Creo il Cart Item attraverso il DTO del prodotto solo con i dati essenziali, lo salvo nel db </li>
+     *     <li> Aggiungo il prodotto al cart dell'utente e lo salvo nel db </li>
+     * </ul>
+     * @param productId id del prodotto
+     * @param request quantità richiesta da inserire nel carrello
+     * @return un DTO con i dati del carrello modificato
+     */
     @Override
     @Transactional
     public CartUpdateResponseDto addProduct(Long productId, PurchaseRequestDto request) {
@@ -45,7 +57,7 @@ public class CartServiceImpl implements CartService {
 
         if (product == null){
             log.warn("[ADD PRODUCT] Prodotto {} non trovato", productId);
-            throw new EntityNotFoundException("Prodotto non trovato");
+            throw new ProductNotFoundEx("Prodotto non trovato");
         }
 
         Cart userCart = cartRepository.findByUserOwner(userId)
@@ -82,22 +94,39 @@ public class CartServiceImpl implements CartService {
                 .build();
     }
 
+    /**
+     * Rimozione prodotto dal carrello
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     *
+     * <ul>
+     *     <li> Ottengo il cart dell'utente, se non esiste lancio un eccezione </li>
+     *     <li> Ottengo il prodotto dal cart dell'utente, dato il parametro id, se non esiste lancio un eccezione </li>
+     *     <li> Rimuovo il prodotto e controllo che sia andato a buon fine </li>
+     *     <li> Aggiorno la quantità del prodotto nel product-service </li>
+     *     <li> Salvo il cart dell'utente </li>
+     * </ul>
+     * @param productId per ottenere il prodotto
+     * @throws CartNotFoundEx se il carrello non esiste
+     * @throws ProductNotFoundEx se il prodotto non esiste
+     * @return un DTO per mostrare il carrello aggiornato
+     */
     @Override
     @Transactional
     public CartUpdateResponseDto remove(Long productId) {
         UUID userId =  getUserId();
 
         Cart userCart = cartRepository.findByUserOwner(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Carrello non trovato"));
+                .orElseThrow(() -> new CartNotFoundEx("Carrello non trovato"));
 
         CartProduct product = cartProductRepository.findByProductId(productId)
-                .orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato"));
+                .orElseThrow(() -> new ProductNotFoundEx("Prodotto non trovato"));
 
         boolean removed = userCart.getCartItem().removeIf(
                 ci -> ci.getProductId().equals(productId)
         );
         if (!removed){
-            throw new EntityNotFoundException("Impossibile rimuovere il prodotto dal carrello");
+            throw new ProductNotFoundEx("Impossibile rimuovere il prodotto dal carrello");
         }
 
         productExchangeController.updateQuantity(QuantityUpdateDto.builder()
@@ -118,6 +147,17 @@ public class CartServiceImpl implements CartService {
         
     }
 
+    /**
+     * Ottiene il carrello con i prodotti dell'utente
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     * <ul>
+     *     <li> Ottengo il carrello dell'utente e creo un DTO di risposta, se non esiste lancio un eccezione </li>
+     *     <li> Per ogni prodotto al suo interno, creo un DTO di risposta </li>
+     * </ul>
+     * @throws CartNotFoundEx carrello non esistente
+     * @return
+     */
     @Override
     public CartDto getUserCart() {
         UUID userId = getUserId();
@@ -138,15 +178,26 @@ public class CartServiceImpl implements CartService {
                                 .toList())
                         .build())
                 .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Carrello non trovato"));
+                .orElseThrow(() -> new CartNotFoundEx("Carrello non trovato"));
     }
 
+    /**
+     * Calcolo totale del carrello
+     *
+     * <p> Il metodo esegue i seguenti step: </p>
+     * <ul>
+     *     <li> Ottengo il carrello dell'utente, se non esiste lancio un eccezione </li>
+     *     <li> Per ogni item del carrello, ottengo il suo prezzo, lo moltiplico per la quantità e lo sommo</li>
+     * </ul>
+     * @return prezzo totale
+     * @throws CartNotFoundEx se il carrello non esiste
+     */
     @Override
     public Double getTotalPrice() {
         UUID userId = getUserId();
 
         Cart userCart = cartRepository.findByUserOwner(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Carrello non trovato"));
+                .orElseThrow(() -> new CartNotFoundEx("Carrello non trovato"));
 
         return userCart.getCartItem().stream()
                 .mapToDouble(item -> item.getPrice() * item.getQuantity())

@@ -1,10 +1,12 @@
 package com.market_place.product_service.service;
 
 import com.market_place.product_service.dto.*;
+import com.market_place.product_service.exception.ProductNotFound;
 import com.market_place.product_service.mapper.ProductMapper;
 import com.market_place.product_service.model.Product;
 import com.market_place.product_service.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -90,7 +92,8 @@ public class ProductServiceImpl implements ProductService{
      * </ul>
      * @param request DTO con id del prodotto, la quantità e il tipo di update (ADD, DECREMENT)
      * @return un DTO che mappa l'oggetto dal database
-     * @throws EntityNotFoundException se il prodotto non viene trovato
+     * @throws InternalServerErrorException se il prodotto non viene trovato,
+     * se l'id dell'utente non corrisponde al creatore del prodotto o la quantità è negativa
      */
     @Override
     @Transactional
@@ -106,10 +109,11 @@ public class ProductServiceImpl implements ProductService{
             rows = productRepository.decrementQuantity(request.getProductId(), request.getQuantity(), userId);
         }
         if (rows == 0) {
-            throw new EntityNotFoundException("Errore lato server");
+            log.warn("[UPDATE] Errore con update del prodotto {}", request.getProductId());
+            throw new InternalServerErrorException("Errore interno");
         }
         Product updatedProduct = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato dopo aggiornamento"));
+                .orElseThrow(() -> new ProductNotFound("Prodotto non trovato dopo aggiornamento"));
 
         log.info("[UPDATE] Modifica del prodotto {} andata a buon fine, quantità attuale: {}",
                 updatedProduct.getId(), updatedProduct.getQuantity());
@@ -129,7 +133,7 @@ public class ProductServiceImpl implements ProductService{
      *     <li> Se le righe aggiornate sono == 0, nessuna entità è stata aggiornata </li>
      * </ul>
      * @param id del prodotto da eliminare
-     * @throws EntityNotFoundException entità non trovata
+     * @throws InternalServerErrorException se il prodotto non esiste o l'id dell'user che l'ha creato non corrisponde
      */
     @Override
     @Transactional
@@ -150,7 +154,7 @@ public class ProductServiceImpl implements ProductService{
         }
         if (rows == 0){
             log.warn("[DELETE] Prodotto con id {} non trovato o errore interno", id);
-            throw new EntityNotFoundException("Elemento non esistente");
+            throw new InternalServerErrorException("Errore interno");
         }
     }
 
@@ -187,6 +191,7 @@ public class ProductServiceImpl implements ProductService{
      * </ul>
      * @param productId id del prodotto
      * @param requestDto DTO contenete la quantità richiesta dall'utente
+     * @throws ProductNotFound se il prodotto non viene trovato o la quantità non è disponibile
      * @return un DTO che mappa l'oggetto dal database
      */
     @Override
@@ -197,19 +202,18 @@ public class ProductServiceImpl implements ProductService{
                 productId, requestDto.getQuantity(), userId);
 
         Product existProduct = productRepository.findAvaibleProduct(productId, requestDto.getQuantity())
-                .orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato o quantità non disponibile"));
+                .orElseThrow(() -> new ProductNotFound("Prodotto non trovato o quantità non disponibile"));
 
         int rows = productRepository.decrementProductQuantity(existProduct.getId(), requestDto.getQuantity());
         if (rows == 0){
             log.warn("[UPDATE] Prodotto con id {} non trovato o errore interno", existProduct.getId());
-            throw new EntityNotFoundException("Elemento non esistente");
+            throw new ProductNotFound("Elemento non esistente");
         }
 
         ProductResponseDto response = mapper.fromProductToDto(existProduct);
         response.setQuantity(requestDto.getQuantity());
 
         log.info("{}", response);
-
         return response;
     }
 

@@ -1,12 +1,12 @@
-package com.market_place.auth_service.exception;
+package com.market_place.product_service.exception;
 
+import feign.FeignException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
@@ -15,12 +15,6 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Object> handleBadCCredentialsEx(BadCredentialsException ex, WebRequest request){
-        return generateResponse("Credenziali errate", ex, HttpStatus.UNAUTHORIZED, request);
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleArgumentNotValidEx(MethodArgumentNotValidException ex, WebRequest request){
@@ -37,24 +31,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(UserAlreadyRegisterEx.class)
-    public ResponseEntity<Object> handleUserAlredyRegisterEx(UserAlreadyRegisterEx ex, WebRequest request){
-        return generateResponse("Richiesta errata", ex, HttpStatus.BAD_REQUEST, request);
+    @ExceptionHandler(HttpServerErrorException.InternalServerError.class)
+    public ResponseEntity<Object> handlerServerEx(FeignException.InternalServerError ex, WebRequest request){
+        return generateResponse("Errore lato server", ex, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<Object> handleUserNotFoundEx(UsernameNotFoundException ex, WebRequest request){
-        return generateResponse("Errore interno", ex, HttpStatus.NOT_FOUND, request);
-    }
-
-    @ExceptionHandler(MissingAuthHeaderEx.class)
-    public ResponseEntity<Object> handleMissingHeaderEx(MissingAuthHeaderEx ex, WebRequest request){
-        return generateResponse("Authorization header mancante", ex, HttpStatus.UNAUTHORIZED, request);
-    }
-
-    @ExceptionHandler(InvalidToken.class)
-    public ResponseEntity<Object> handleInvalidTokenEx(InvalidToken ex, WebRequest request){
-        return generateResponse("Token scaduto o malformato", ex, HttpStatus.FORBIDDEN, request);
+    @ExceptionHandler(ProductNotFound.class)
+    public ResponseEntity<Object> handleProductNotFoundEx(ProductNotFound ex, WebRequest request){
+        return generateResponse("Prodotto non trovato", ex, HttpStatus.NOT_FOUND, request);
     }
 
     private static ResponseEntity<Object> generateResponse(
