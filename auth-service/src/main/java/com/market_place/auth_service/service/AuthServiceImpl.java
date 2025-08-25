@@ -13,6 +13,7 @@ import com.market_place.auth_service.security.UserDetailsImpl;
 import com.market_place.auth_service.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -133,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, Object> validateToken(String authHeader) {
+    public ResponseEntity<Void> validateToken(String authHeader) {
         log.info("[VALIDAZIONE TOKEN]");
 
         if (authHeader == null){
@@ -155,13 +156,11 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Token non valido");
         }
 
-        HashMap<String, Object> response = new HashMap<>();
-        response.put("X-User-Id", userId);
-        response.put("X-User-Email", email);
-        response.put("X-User-Roles", String.join(",", roles));
-
-        log.info("[VALIDAZIONE TOKEN] Token valido, risposta {}", response);
-        return response;
+        return ResponseEntity.ok()
+                .header("X-User-Id", String.valueOf(userId))
+                .header("X-User-Email", email)
+                .header("X-User-Roles", String.join(",", roles))
+                .build();
 
     }
 }

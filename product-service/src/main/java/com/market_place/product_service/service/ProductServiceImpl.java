@@ -106,7 +106,7 @@ public class ProductServiceImpl implements ProductService{
             rows = productRepository.decrementQuantity(request.getProductId(), request.getQuantity(), userId);
         }
         if (rows == 0) {
-            throw new EntityNotFoundException("Prodotto non trovato o quantità insufficiente");
+            throw new EntityNotFoundException("Errore lato server");
         }
         Product updatedProduct = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato dopo aggiornamento"));

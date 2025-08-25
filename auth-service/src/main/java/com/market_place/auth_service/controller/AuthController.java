@@ -30,7 +30,7 @@ public class AuthController {
     }
 
     @GetMapping("/validate")
-    public ResponseEntity<Map<String, Object>> validateToken(@RequestHeader("Authorization") String authHeader){
-        return ResponseEntity.ok(authService.validateToken(authHeader));
+    public ResponseEntity<Void> validateToken(@RequestHeader("Authorization") String authHeader){
+        return authService.validateToken(authHeader);
     }
 }

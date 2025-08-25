@@ -27,7 +27,7 @@ public class CustomOncePerReqFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain) throws ServletException, IOException {;
 
         UUID userId = UUID.fromString(request.getHeader("x-User-Id"));
         String roles = request.getHeader("X-User-Roles");
