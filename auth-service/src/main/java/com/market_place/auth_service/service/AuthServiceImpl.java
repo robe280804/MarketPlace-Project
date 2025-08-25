@@ -10,6 +10,7 @@ import com.market_place.auth_service.model.User;
 import com.market_place.auth_service.repository.UserRepository;
 import com.market_place.auth_service.security.JwtService;
 import com.market_place.auth_service.security.UserDetailsImpl;
+import com.market_place.auth_service.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,8 +18,15 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -29,6 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder encoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     /**
      * Registrazione dell'utente
@@ -120,6 +129,39 @@ public class AuthServiceImpl implements AuthService {
                 .roles(userDetails.getAuthorities())
                 .token(token)
                 .build();
+
+    }
+
+    @Override
+    public Map<String, Object> validateToken(String authHeader) {
+        log.info("[VALIDAZIONE TOKEN]");
+
+        if (authHeader == null){
+            log.warn("[VALIDAZIONE TOKEN] Authorization non presente nel header della richiesta");
+            throw new RuntimeException("Authorization non presente nel header");
+        }
+        String token = authHeader.substring(7);
+
+        UUID userId = jwtService.estraiUserId(token);
+        String email = jwtService.estraiEmail(token);
+        List<String> roles = jwtService.estraiAuthorities(token);
+
+        log.info("[VALIDAZIONE TOKEN] User {} con email {} e ruoli {}", userId, email, roles);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+        if (!jwtService.isTokenValid(token, userDetails)){
+            log.warn("[VALIDAZIONE TOKEN] Token non valido per user {}", email);
+            throw new RuntimeException("Token non valido");
+        }
+
+        HashMap<String, Object> response = new HashMap<>();
+        response.put("X-User-Id", userId);
+        response.put("X-User-Email", email);
+        response.put("X-User-Roles", String.join(",", roles));
+
+        log.info("[VALIDAZIONE TOKEN] Token valido, risposta {}", response);
+        return response;
 
     }
 }

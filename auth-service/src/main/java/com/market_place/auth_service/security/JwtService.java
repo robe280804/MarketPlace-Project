@@ -66,12 +66,9 @@ public class JwtService {
         return estraiAllClaims(token).get("email", String.class);
     }
 
-    /*
-    public List<String> estraiAuthorities(String token) {
+    public List<String> estraiAuthorities(String token){
         return estraiAllClaims(token).get("authorities", List.class);
     }
-    */
-
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = estraiEmail(token);
